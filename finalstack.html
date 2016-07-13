@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Stacked Bar Chart</title>
+      <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+      <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+      <style>
+        .axis text {
+          font-family: 'Open Sans', sans-serif;
+          font-size: 14pt;
+        }
+        .axis .label {
+          font-size: 20pt;
+        }
+        .axis path, .axis line {
+          fill: none;
+          stroke: #000;
+          stroke-width : 1px;
+          shape-rendering: crispEdges;
+        display: block;
+        }
+      </style>
+    </head>
+    <body>
+      <center><h2>Stacked Barchart for Life Expectancy of Asian Countries</h2>
+      <h3>over the period (1960-2015)</h3></center>
+      <script>
+        var outerWidth = 1300;
+        var outerHeight = 500;
+        var margin = { left: 90, top: 90, right: 30, bottom: 40 };
+        var barPadding = 0.3;
+        var xColumn = "Year";
+        var yColumn = "Value";
+        var colorColumn = "IndicatorName";
+        var layerColumn = colorColumn;
+        var innerWidth  = outerWidth  - margin.left - margin.right;
+        var innerHeight = outerHeight - margin.top  - margin.bottom;
+        var svg = d3.select("body").append("svg")
+          .attr("width",  outerWidth)
+          .attr("height", outerHeight);
+        var g = svg.append("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        var xAxisG = g.append("g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(0," + innerHeight + ")");
+        var yAxisG = g.append("g")
+          .attr("class", "y axis");
+        var xScale = d3.scale.ordinal().rangeBands([0, innerWidth], barPadding);
+        var yScale = d3.scale.linear().range([innerHeight, 0]);
+        var colorScale = d3.scale.category20();
+        // Use a modified SI formatter that uses "B" for Billion.
+        var siFormat = d3.format("s");
+        var customTickFormat = function (d){
+          return siFormat(d).replace("G", "B");
+        };
+        var xAxis = d3.svg.axis().scale(xScale).orient("bottom")
+          .outerTickSize(0);
+        var yAxis = d3.svg.axis().scale(yScale).orient("left")
+          .ticks(5)
+          .tickFormat(customTickFormat)
+          .outerTickSize(0);
+        function render(data){
+          var nested = d3.nest()
+            .key(function (d){ return d[layerColumn]; })
+            .entries(data)
+          var stack = d3.layout.stack()
+            .y(function (d){ return d[yColumn]; })
+            .values(function (d){ return d.values; });
+          var layers = stack(nested);
+          xScale.domain(layers[0].values.map(function (d){
+            return d[xColumn];
+          }));
+          yScale.domain([
+            0,
+            d3.max(layers, function (layer){
+              return d3.max(layer.values, function (d){
+                return d.y0 + d.y;
+              });
+            })
+          ]);
+          colorScale.domain(layers.map(function (layer){
+            return layer.key;
+          }));
+          xAxisG.call(xAxis)
+            .append("text")
+            .attr("transform", "rotate(0)")
+            .attr("y", 40)
+            .attr("x", 1175)
+            .attr("dx", ".71em")
+            .style("text-anchor", "end")
+            .style("font-weight","bold")
+            .style("fill","#3182bd")
+            .text("Year");
+          yAxisG.call(yAxis)
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -70)
+            .attr("dy", ".71em")
+            .style("text-anchor", "end")
+            .style("fill","#3182bd")
+            .style("font-weight","bold")
+            .text("Life Expectancy");
+          var layerGroups = g.selectAll(".layer").data(layers);
+          layerGroups.enter().append("g").attr("class", "layer");
+          layerGroups.exit().remove();
+          layerGroups.style("fill", function (d){
+            return colorScale(d.key);
+          });
+          var bars = layerGroups.selectAll("rect").data(function (d){
+            return d.values;
+          });
+          bars.enter().append("rect")
+          bars.exit().remove();
+          bars
+            .attr("x", function (d){ return xScale(d[xColumn]); })
+            .attr("y", function (d){ return yScale(d.y0 + d.y); })
+            .attr("width", xScale.rangeBand())
+            .attr("height", function (d){ return innerHeight - yScale(d.y); })
+      svg.append('text')
+          .attr('fill', 'black')
+          .attr('x', 1000 + margin.left + 16*9)
+          .attr('y', 1 * 24 + 24)
+          .text("Male");
+      svg.append('rect')
+          .attr('fill', "#aec7e8")
+          .attr('width', 20)
+          .attr('height', 20)
+          .attr('x', 1000 + margin.left + 2*60)
+          .attr('y', 1 * 24 + 6);
+          svg.append('text')
+              .attr('fill', 'black')
+              .attr('x', 1000 + margin.left + 16*9)
+              .attr('y', 2 * 24 + 24)
+              .text("Female");
+          svg.append('rect')
+              .attr('fill', "#3182bd")
+              .attr('width', 20)
+              .attr('height', 20)
+              .attr('x', 1000 + margin.left + 2*60)
+              .attr('y', 2 * 24 + 6);
+        }
+        d3.json("Asianew.json", render);
+      </script>
+    </body>
+  </html>

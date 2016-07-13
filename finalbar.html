@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+    <meta charset="utf-8">
+    <head>
+        <title>Top 5 countries with highest Life expectancy</title>
+        <style>
+     .bar{
+       fill: #3182bd  ;
+     }
+        .axis {
+          font: 20px sans-serif;
+        }
+        .axis path,
+        .axis line {
+          fill: none;
+          stroke: #000;
+            stroke-width:1px;
+          shape-rendering: crispEdges;
+        }
+        </style>
+    </head>
+    <body>
+        <center><h2>Barchart for Life Expectancy</h2>
+        <h3>over the period (1960-2015)</h3></center>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script>
+    // set the dimensions of the canvas
+    var margin = {top: 50, right: 20, bottom: 70, left: 240},
+       width = 1200 - margin.left - margin.right,
+       height = 530 - margin.top - margin.bottom;
+    // set the ranges
+    var x = d3.scale.ordinal().rangeRoundBands([0, width], .35);
+    var y = d3.scale.linear().range([height, 0]);
+    // define the axis
+    var xAxis = d3.svg.axis()
+       .scale(x)
+       .orient("bottom");
+    var yAxis = d3.svg.axis()
+       .scale(y)
+       .orient("left")
+       .ticks(5);
+    // add the SVG element
+    var svg = d3.select("body").append("svg")
+       .attr("width", width + margin.left + margin.right)
+       .attr("height", height + margin.top + margin.bottom)
+     .append("g")
+       .attr("transform",
+             "translate(" + margin.left + "," + margin.top + ")");
+    // load the data
+    d3.json("top2.json", function(error, data) {
+       data.forEach(function(d) {
+           d.Country = d.Country;
+           d.Value = +d.Value;
+       });
+     // scale the range of the data
+     x.domain(data.map(function(d) { return d.Country; }));
+     y.domain([d3.min(data,function(d){return d.Value-5;}),d3.max(data,function(d){return d.Value;})]);
+     // add axis
+     svg.append("g")
+         .attr("class", "x axis")
+         .attr("transform", "translate(0," + height + ")")
+         .call(xAxis)
+                .append("text")
+              .attr("transform", "rotate(0)")
+              .attr("y", 50)
+                    .attr("x", 910)
+              .attr("dx", ".71em")
+              .style("text-anchor", "end")
+              .style("fill","#3182bd ")
+              .text("Country");
+     svg.append("g")
+         .attr("class", "y axis")
+         .call(yAxis)
+         .append("text")
+         .attr("transform", "rotate(-90)")
+         .attr("y", -85)
+         .attr("dy", ".71em")
+         .style("text-anchor", "end")
+         .style("fill","#3182bd ")
+         .text("Life Expectancy");
+     // Add bar chart
+     svg.selectAll("bar")
+         .data(data)
+       .enter().append("rect")
+         .attr("class", "bar")
+         .attr("x", function(d) { return x(d.Country); })
+         .attr("width", x.rangeBand())
+         .attr("y", function(d) { return y(d.Value); })
+         .attr("height", function(d) { return height - y(d.Value); });
+    });
+    </script>
+    </body>
